@@ -26,10 +26,11 @@ class UserInDB(UserBase):
     class Config:
         from_attributes = True
 
+# UPDATED: Removed refresh_token
 class Token(BaseModel):
     access_token: str
-    refresh_token: str
     token_type: str = "bearer"
+    expires_in: int  # Token expiry in seconds (optional but useful for frontend)
 
 class TokenData(BaseModel):
     email: Optional[str] = None

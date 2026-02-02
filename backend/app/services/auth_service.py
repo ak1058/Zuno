@@ -1,31 +1,25 @@
 # app/services/auth_service.py
-
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-
 from app.models.user import User
 from app.schemas.user import UserCreate
 from app.utils.security import (
     get_password_hash,
     verify_password,
     create_access_token,
-    create_refresh_token,
     verify_token,
     generate_verification_token
 )
 from app.services.email_service import EmailService
 from app.config import settings
 
-
 class AuthService:
-
     # -----------------------------
     # Register User
     # -----------------------------
     @staticmethod
     def register_user(db: Session, user_data: UserCreate):
-
         # Check if user already exists
         existing_user = db.query(User).filter(User.email == user_data.email).first()
         if existing_user:
@@ -33,9 +27,8 @@ class AuthService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already registered"
             )
-
+        
         verification_token = generate_verification_token()
-
         db_user = User(
             full_name=user_data.full_name,
             email=user_data.email,
@@ -44,21 +37,18 @@ class AuthService:
             verification_token=verification_token,
             verification_token_expires=datetime.now(timezone.utc) + timedelta(days=1)
         )
-
+        
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
-
-        verification_link = (
-            f"{settings.FRONTEND_URL}/verify-email?token={verification_token}"
-        )
-
+        
+        verification_link = f"{settings.FRONTEND_URL}/verify-email?token={verification_token}"
         EmailService.send_verification_email(
             to_email=user_data.email,
             verification_link=verification_link,
             user_name=user_data.full_name
         )
-
+        
         return db_user
 
     # -----------------------------
@@ -66,25 +56,23 @@ class AuthService:
     # -----------------------------
     @staticmethod
     def verify_email(db: Session, token: str):
-
         user = db.query(User).filter(
             User.verification_token == token,
             User.verification_token_expires > datetime.now(timezone.utc)
         ).first()
-
+        
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid or expired verification token"
             )
-
+        
         user.is_verified = True
         user.verification_token = None
         user.verification_token_expires = None
-
         db.commit()
         db.refresh(user)
-
+        
         return user
 
     # -----------------------------
@@ -92,49 +80,39 @@ class AuthService:
     # -----------------------------
     @staticmethod
     def authenticate_user(db: Session, email: str, password: str):
-
         user = db.query(User).filter(User.email == email).first()
-
         if not user:
             return None
-
         if not verify_password(password, user.hashed_password):
             return None
-
         return user
 
     # -----------------------------
-    # Login
+    # Login - ONLY ACCESS TOKEN
     # -----------------------------
     @staticmethod
     def login_user(db: Session, email: str, password: str):
-
         user = AuthService.authenticate_user(db, email, password)
-
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect email or password"
             )
-
+        
         if not user.is_verified:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Please verify your email before logging in"
             )
-
+        
         access_token = create_access_token(
             data={"sub": user.email, "user_id": user.id}
         )
-
-        refresh_token = create_refresh_token(
-            data={"sub": user.email, "user_id": user.id}
-        )
-
+        
         return {
             "access_token": access_token,
-            "refresh_token": refresh_token,
-            "token_type": "bearer"
+            "token_type": "bearer",
+            "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60  # Convert to seconds
         }
 
     # -----------------------------
@@ -142,29 +120,25 @@ class AuthService:
     # -----------------------------
     @staticmethod
     def get_current_user(db: Session, token: str):
-
         payload = verify_token(token)
-
         if not payload:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token"
+                detail="Invalid or expired token"
             )
-
+        
         email = payload.get("sub")
-
         if not email:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token"
             )
-
+        
         user = db.query(User).filter(User.email == email).first()
-
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User not found"
             )
-
+        
         return user

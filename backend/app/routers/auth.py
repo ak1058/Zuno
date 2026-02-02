@@ -41,11 +41,11 @@ async def verify_email(verify_data: UserVerify, db: Session = Depends(get_db)):
 @router.post("/login", response_model=Token)
 async def login(login_data: UserLogin, db: Session = Depends(get_db)):
     """
-    Login user and return access & refresh tokens
+    Login user and return access token
     """
     try:
-        tokens = AuthService.login_user(db, login_data.email, login_data.password)
-        return tokens
+        token = AuthService.login_user(db, login_data.email, login_data.password)
+        return token
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -54,14 +54,6 @@ async def login(login_data: UserLogin, db: Session = Depends(get_db)):
             detail=str(e)
         )
 
-@router.post("/refresh-token", response_model=Token)
-async def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
-    """
-    Refresh access token using refresh token
-    """
-    # You'll need to implement this based on your refresh token strategy
-    pass
-
 @router.get("/me", response_model=UserInDB)
 async def get_current_user_info(current_user: dict = Depends(get_current_active_user)):
     """
@@ -69,10 +61,13 @@ async def get_current_user_info(current_user: dict = Depends(get_current_active_
     """
     return current_user
 
+
+
+# Optional: Implement resend verification if needed
 @router.post("/resend-verification")
 async def resend_verification_email(email: str, db: Session = Depends(get_db)):
     """
     Resend verification email
     """
-    # You can implement this to resend verification email
+    # Implement if needed
     pass
