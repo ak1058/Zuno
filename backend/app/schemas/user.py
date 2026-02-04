@@ -2,6 +2,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime
+from uuid import UUID
 
 # Base schemas
 class UserBase(BaseModel):
@@ -19,7 +20,7 @@ class UserLogin(BaseModel):
     password: str
 
 class UserInDB(UserBase):
-    id: int
+    id: UUID
     is_verified: bool
     created_at: datetime
     

@@ -106,7 +106,8 @@ class AuthService:
             )
         
         access_token = create_access_token(
-            data={"sub": user.email, "user_id": user.id}
+            data={"sub": user.email, "user_id": str(user.id)}
+
         )
         
         return {
