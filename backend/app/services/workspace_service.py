@@ -172,7 +172,8 @@ class WorkspaceService:
         role: str
     ):
         """
-        Invite a team member to workspace with plan validation
+        Invite a team member to workspace with plan validation with BETTER seat limit checking
+        Now includes pending invites in seat count
         """
         try:
             # 1. Get workspace and verify inviter permissions
@@ -219,6 +220,7 @@ class WorkspaceService:
                 )
                 db.add(subscription)
                 db.commit()
+                db.refresh(subscription)
             
             current_plan = subscription.plan
             plan_config = PLANS.get(current_plan, PLANS["free"])
@@ -230,93 +232,125 @@ class WorkspaceService:
                 WorkspaceMember.is_active == True
             ).count()
             
-            if current_members_count >= seat_limit:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Seat limit reached. Your {current_plan} plan allows only {seat_limit} members per workspace."
-                )
+            # 5. Count PENDING invites that haven't expired
+            # This is the FIX: Include pending invites in seat count
+            pending_invites_count = db.query(Invite).filter(
+                Invite.workspace_id == workspace_id,
+                Invite.status == "pending",
+                Invite.expires_at > datetime.utcnow()
+            ).count()
             
-            # 5. Check if user already exists in system
+            # 6. Check if user already exists in system
             existing_user = db.query(User).filter(
                 User.email == invitee_email,
                 User.is_verified == True
             ).first()
             
-            # 6. Check if user is already a member
+            # 7. Check if user is already an active member
+            user_is_active_member = False
             if existing_user:
                 existing_membership = db.query(WorkspaceMember).filter(
                     WorkspaceMember.workspace_id == workspace_id,
-                    WorkspaceMember.user_id == existing_user.id
+                    WorkspaceMember.user_id == existing_user.id,
+                    WorkspaceMember.is_active == True
                 ).first()
                 
                 if existing_membership:
-                    if existing_membership.is_active:
-                        raise HTTPException(
-                            status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="User is already a member of this workspace"
-                        )
-                    else:
-                        # Reactivate membership
-                        existing_membership.is_active = True
-                        existing_membership.role = role
-                        db.commit()
-                        
-                        return {
-                            "message": "Member reactivated",
-                            "invite_id": None,
-                            "email": invitee_email,
-                            "user_exists": True
-                        }
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="User is already an active member of this workspace"
+                    )
+                
+                # Check if user has inactive membership
+                inactive_membership = db.query(WorkspaceMember).filter(
+                    WorkspaceMember.workspace_id == workspace_id,
+                    WorkspaceMember.user_id == existing_user.id,
+                    WorkspaceMember.is_active == False
+                ).first()
+                
+                if inactive_membership:
+                    # Reactivate membership instead of sending invite
+                    inactive_membership.is_active = True
+                    inactive_membership.role = role
+                    db.commit()
+                    
+                    return {
+                        "message": "Member reactivated",
+                        "invite_id": None,
+                        "email": invitee_email,
+                        "user_exists": True
+                    }
             
-            # 7. Check if pending invite exists
-            existing_invite = db.query(Invite).filter(
+            # 8. Check if user already has a pending invite
+            existing_pending_invite = db.query(Invite).filter(
                 Invite.workspace_id == workspace_id,
                 Invite.email == invitee_email,
                 Invite.status == "pending",
                 Invite.expires_at > datetime.utcnow()
             ).first()
             
-            if existing_invite:
+            # 9. Calculate total occupied seats (active members + pending invites)
+            # If user already has a pending invite, don't count it twice
+            total_occupied_seats = current_members_count + pending_invites_count
+            
+            # If this is a new invite (not resending), check if it would exceed limit
+            if not existing_pending_invite:
+                total_occupied_seats += 1
+            
+            if total_occupied_seats > seat_limit:
+                available_seats = seat_limit - current_members_count
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Cannot send invite. Your {current_plan} plan allows {seat_limit} seats. "
+                        f"You have {current_members_count} active members and {pending_invites_count} pending invites. "
+                        f"Only {available_seats} seat(s) available."
+                )
+            
+            # 10. Handle existing pending invite (resend)
+            if existing_pending_invite:
                 # Update existing invite
-                existing_invite.role = role
-                existing_invite.expires_at = datetime.utcnow() + timedelta(days=7)
+                existing_pending_invite.role = role
+                existing_pending_invite.expires_at = datetime.utcnow() + timedelta(days=7)
+                existing_pending_invite.invited_by = inviter_id
                 db.commit()
+                db.refresh(existing_pending_invite)
                 
                 # Send invitation email
-                invite_link = f"{settings.FRONTEND_URL}/accept-invite?token={existing_invite.token}"
+                invite_link = f"{settings.FRONTEND_URL}/accept-invite?token={existing_pending_invite.token}"
                 EmailService.send_invitation_email(
                     to_email=invitee_email,
                     workspace_name=workspace.name,
                     inviter_name=inviter_membership.user.full_name,
                     invite_link=invite_link,
-                    role=role
+                    role=role,
+                    token=existing_pending_invite.token
                 )
                 
                 return {
                     "message": "Invitation resent",
-                    "invite_id": existing_invite.id,
+                    "invite_id": existing_pending_invite.id,
                     "email": invitee_email,
                     "user_exists": bool(existing_user)
                 }
             
-            # 8. Create new invite
+            # 11. Create new invite
             invite_token = secrets.token_urlsafe(32)
             invite = Invite(
                 workspace_id=workspace_id,
-                invited_by=inviter_id,  # Store who sent the invite
+                invited_by=inviter_id,
                 email=invitee_email,
                 role=role,
                 token=invite_token,
                 status="pending",
                 expires_at=datetime.utcnow() + timedelta(days=7),
-                invited_to_workspace_name=workspace.name  # Store workspace name
+                invited_to_workspace_name=workspace.name
             )
             
             db.add(invite)
             db.commit()
             db.refresh(invite)
             
-            # 9. Send invitation email
+            # 12. Send invitation email
             invite_link = f"{settings.FRONTEND_URL}/accept-invite?token={invite_token}"
             EmailService.send_invitation_email(
                 to_email=invitee_email,

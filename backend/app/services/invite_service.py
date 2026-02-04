@@ -66,9 +66,12 @@ class InviteService:
         password: Optional[str] = None
     ):
         """
-        Accept workspace invitation
-        Handles both existing users and new users
+        Accept workspace invitation with proper transaction management
+        All or nothing - if seat limit reached, rollback everything
         """
+        # Start a new session for transaction control
+        from sqlalchemy.exc import SQLAlchemyError
+        
         try:
             # 1. Get and validate invite
             invite = db.query(Invite).filter(
@@ -98,50 +101,9 @@ class InviteService:
             
             is_new_user = False
             user = existing_user
+            personal_workspace_id = None
             
-            # 3. Handle new user registration
-            if not existing_user:
-                if not full_name or not password:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="New users must provide full name and password"
-                    )
-                
-                # Create new user
-                user = User(
-                    full_name=full_name,
-                    email=invite.email,
-                    hashed_password=get_password_hash(password),
-                    is_verified=True,  # Auto-verify since they came through invite
-                    is_active=True
-                )
-                
-                db.add(user)
-                db.commit()
-                db.refresh(user)
-                is_new_user = True
-                
-                # 4. Create FREE subscription for new user
-                subscription = Subscription(
-                    owner_id=user.id,
-                    plan="free",
-                    status="active"
-                )
-                db.add(subscription)
-                db.commit()
-                
-                # 5. Create personal workspace for new user
-                personal_workspace = WorkspaceService.create_default_workspace_for_user(
-                    db=db,
-                    user_id=user.id,
-                    user_full_name=user.full_name
-                )
-                
-                personal_workspace_id = personal_workspace.id if personal_workspace else None
-            else:
-                personal_workspace_id = None
-            
-            # 6. Get workspace details
+            # 3. CHECK SEAT LIMIT FIRST - BEFORE creating anything
             workspace = db.query(Workspace).filter(
                 Workspace.id == invite.workspace_id,
                 Workspace.is_active == True
@@ -153,7 +115,7 @@ class InviteService:
                     detail="Workspace not found or inactive"
                 )
             
-            # 7. Check subscription seat limits
+            # Check subscription seat limits BEFORE creating user
             subscription = db.query(Subscription).filter(
                 Subscription.owner_id == workspace.owner_id
             ).first()
@@ -169,13 +131,74 @@ class InviteService:
                     WorkspaceMember.is_active == True
                 ).count()
                 
-                if current_members_count >= seat_limit:
+                # Check if adding this user would exceed limit
+                # First check if user is already counted
+                user_already_member = False
+                if existing_user:
+                    existing_membership = db.query(WorkspaceMember).filter(
+                        WorkspaceMember.workspace_id == workspace.id,
+                        WorkspaceMember.user_id == existing_user.id,
+                        WorkspaceMember.is_active == True
+                    ).first()
+                    user_already_member = existing_membership is not None
+                
+                if not user_already_member and current_members_count >= seat_limit:
                     raise HTTPException(
                         status_code=status.HTTP_403_FORBIDDEN,
                         detail=f"Workspace has reached its member limit of {seat_limit} for {current_plan} plan"
                     )
             
-            # 8. Check if user is already a member
+            # 4. Now handle user creation/retrieval
+            if not existing_user:
+                if not full_name or not password:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="New users must provide full name and password"
+                    )
+                
+                # Create new user
+                user = User(
+                    full_name=full_name,
+                    email=invite.email,
+                    hashed_password=get_password_hash(password),
+                    is_verified=True,
+                    is_active=True
+                )
+                
+                db.add(user)
+                db.flush()  # Flush to get user ID but don't commit yet
+                
+                is_new_user = True
+                
+                # Create FREE subscription for new user
+                subscription = Subscription(
+                    owner_id=user.id,
+                    plan="free",
+                    status="active"
+                )
+                db.add(subscription)
+                db.flush()
+                
+                # Create personal workspace for new user
+                try:
+                    # Use a separate method that doesn't commit
+                    personal_workspace = InviteService._create_personal_workspace_without_commit(
+                        db=db,
+                        user_id=user.id,
+                        user_full_name=user.full_name
+                    )
+                    personal_workspace_id = personal_workspace.id
+                except Exception as e:
+                    # If workspace creation fails, rollback user creation
+                    db.rollback()
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=f"Failed to create personal workspace: {str(e)}"
+                    )
+            else:
+                personal_workspace_id = None
+            
+            # 5. Add user to workspace (check again to be safe)
             existing_membership = db.query(WorkspaceMember).filter(
                 WorkspaceMember.workspace_id == workspace.id,
                 WorkspaceMember.user_id == user.id
@@ -191,7 +214,6 @@ class InviteService:
                     # Reactivate membership
                     existing_membership.is_active = True
                     existing_membership.role = invite.role
-                    db.commit()
             else:
                 # Create new membership
                 workspace_member = WorkspaceMember(
@@ -201,14 +223,15 @@ class InviteService:
                     is_active=True
                 )
                 db.add(workspace_member)
-                db.commit()
             
-            # 9. Update invite status
+            # 6. Update invite status
             invite.status = "accepted"
             invite.accepted_at = datetime.utcnow()
+            
+            # 7. FINAL COMMIT - Only if everything succeeded
             db.commit()
             
-            # 10. Generate access token for the user
+            # 8. Generate access token
             access_token = create_access_token(
                 data={"sub": user.email, "user_id": str(user.id)}
             )
@@ -222,15 +245,75 @@ class InviteService:
                 "personal_workspace_id": personal_workspace_id
             }
             
-        except HTTPException:
-            raise
+        except HTTPException as he:
+            # Rollback on HTTP exceptions (like seat limit reached)
+            db.rollback()
+            raise he
+            
+        except SQLAlchemyError as e:
+            # Rollback on database errors
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Database error: {str(e)}"
+            )
+            
         except Exception as e:
+            # Rollback on any other errors
             db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to accept invitation: {str(e)}"
             )
-    
+
+    @staticmethod
+    def _create_personal_workspace_without_commit(db: Session, user_id: uuid.UUID, user_full_name: str):
+        """
+        Create personal workspace without committing
+        Used within transaction
+        """
+        from app.utils.slug import create_slug
+        
+        # Extract first name
+        first_name = user_full_name.split()[0] if user_full_name.split() else "User"
+        
+        # Create workspace name
+        workspace_name = f"{first_name}'s Workspace"
+        
+        # Create unique slug
+        base_slug = create_slug(workspace_name)
+        slug = base_slug
+        counter = 1
+        
+        # Ensure slug is unique
+        while db.query(Workspace).filter(Workspace.slug == slug).first():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+        
+        # Create workspace
+        workspace = Workspace(
+            name=workspace_name,
+            slug=slug,
+            owner_id=user_id,
+            is_active=True
+        )
+        
+        db.add(workspace)
+        db.flush()  # Get ID but don't commit
+        
+        # Create workspace member entry with owner role
+        workspace_member = WorkspaceMember(
+            workspace_id=workspace.id,
+            user_id=user_id,
+            role="owner",
+            is_active=True
+        )
+        
+        db.add(workspace_member)
+        db.flush()
+        
+        return workspace
+
     @staticmethod
     def decline_invite(db: Session, token: str, email: str):
         """
