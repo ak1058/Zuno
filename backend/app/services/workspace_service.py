@@ -303,11 +303,13 @@ class WorkspaceService:
             invite_token = secrets.token_urlsafe(32)
             invite = Invite(
                 workspace_id=workspace_id,
+                invited_by=inviter_id,  # Store who sent the invite
                 email=invitee_email,
                 role=role,
                 token=invite_token,
                 status="pending",
-                expires_at=datetime.utcnow() + timedelta(days=7)  # 7 days expiry
+                expires_at=datetime.utcnow() + timedelta(days=7),
+                invited_to_workspace_name=workspace.name  # Store workspace name
             )
             
             db.add(invite)
@@ -321,7 +323,8 @@ class WorkspaceService:
                 workspace_name=workspace.name,
                 inviter_name=inviter_membership.user.full_name,
                 invite_link=invite_link,
-                role=role
+                role=role,
+                token=invite_token
             )
             
             return {

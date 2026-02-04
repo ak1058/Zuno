@@ -69,7 +69,8 @@ class EmailService:
         workspace_name: str, 
         inviter_name: str,
         invite_link: str,
-        role: str
+        role: str,
+        token: str
     ):
         """Send workspace invitation email"""
         subject = f"Invitation to join {workspace_name} on Zuno"
@@ -80,31 +81,52 @@ class EmailService:
         <html>
         <body style="font-family: Arial, sans-serif; line-height: 1.6;">
             <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="color: #4CAF50; margin: 0;">Zuno</h1>
+                    <p style="color: #666; margin: 5px 0;">Task Management Platform</p>
+                </div>
+                
                 <h2 style="color: #333;">Workspace Invitation</h2>
                 <p>Hello,</p>
                 <p><strong>{{ inviter_name }}</strong> has invited you to join the workspace 
-                   <strong>{{ workspace_name }}</strong> on Zuno Task Management.</p>
+                <strong>"{{ workspace_name }}"</strong> on Zuno Task Management.</p>
                 
-                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #4CAF50;">
                     <p><strong>Workspace:</strong> {{ workspace_name }}</p>
-                    <p><strong>Role:</strong> {{ role }}</p>
+                    <p><strong>Role:</strong> <span style="background-color: #e8f5e9; padding: 4px 8px; border-radius: 4px;">{{ role }}</span></p>
                     <p><strong>Invited by:</strong> {{ inviter_name }}</p>
+                    <p><strong>Invitation ID:</strong> <code style="background-color: #f1f1f1; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{{ token_short }}</code></p>
                 </div>
                 
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="{{ invite_link }}" style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                <div style="text-align: center; margin: 35px 0;">
+                    <a href="{{ invite_link }}" style="background-color: #4CAF50; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">
                         Accept Invitation
                     </a>
                 </div>
                 
-                <p>Or copy and paste this link in your browser:</p>
-                <p style="word-break: break-all; color: #666;">{{ invite_link }}</p>
+                <p style="text-align: center; color: #666; font-size: 14px;">
+                    Or copy and paste this link in your browser:
+                </p>
+                <p style="word-break: break-all; color: #666; background-color: #f9f9f9; padding: 12px; border-radius: 4px; font-size: 13px; text-align: center;">
+                    {{ invite_link }}
+                </p>
                 
-                <p>This invitation will expire in 7 days.</p>
-                <p>If you don't have a Zuno account, you'll be prompted to create one.</p>
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                    <p style="color: #777; font-size: 14px;">
+                        <strong>Important:</strong><br>
+                        • This invitation will expire in 7 days<br>
+                        • If you don't have a Zuno account, you'll be prompted to create one<br>
+                        • You'll get your own personal workspace along with access to this workspace
+                    </p>
+                </div>
                 
                 <br>
                 <p>Best regards,<br>The Zuno Team</p>
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #999; font-size: 12px;">
+                    <p>© 2024 Zuno Task Management. All rights reserved.</p>
+                    <p>If you received this email by mistake, please ignore it.</p>
+                </div>
             </div>
         </body>
         </html>
@@ -116,7 +138,8 @@ class EmailService:
             workspace_name=workspace_name,
             inviter_name=inviter_name,
             invite_link=invite_link,
-            role=role.capitalize()
+            role=role.capitalize(),
+            token_short=token[:8] + "..."  # Show only first 8 chars of token
         )
         
         # Create message

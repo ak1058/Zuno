@@ -172,3 +172,62 @@ class AuthService:
             )
         
         return user
+    
+
+    @staticmethod
+    def register_invited_user(db: Session, email: str, full_name: str, password: str):
+        """
+        Register a user who came through an invitation
+        - Auto-verifies email since they were invited
+        - Creates subscription
+        - Creates personal workspace
+        """
+        # Check if user already exists
+        existing_user = db.query(User).filter(User.email == email).first()
+        if existing_user:
+            if existing_user.is_verified:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email already registered and verified"
+                )
+            else:
+                # Update existing unverified user
+                existing_user.full_name = full_name
+                existing_user.hashed_password = get_password_hash(password)
+                existing_user.is_verified = True
+                existing_user.verification_token = None
+                existing_user.verification_token_expires = None
+                db.commit()
+                db.refresh(existing_user)
+                user = existing_user
+        else:
+            # Create new user
+            user = User(
+                full_name=full_name,
+                email=email,
+                hashed_password=get_password_hash(password),
+                is_verified=True,  # Auto-verify for invited users
+                is_active=True
+            )
+            
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        
+        # Create FREE subscription
+        subscription = Subscription(
+            owner_id=user.id,
+            plan="free",
+            status="active"
+        )
+        db.add(subscription)
+        db.commit()
+        
+        # Create default workspace
+        WorkspaceService.create_default_workspace_for_user(
+            db=db,
+            user_id=user.id,
+            user_full_name=user.full_name
+        )
+        
+        return user
