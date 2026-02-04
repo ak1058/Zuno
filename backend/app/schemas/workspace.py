@@ -1,5 +1,5 @@
 # app/schemas/workspace.py
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
@@ -31,3 +31,20 @@ class WorkspaceMemberResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+# New schemas for invite functionality
+class InviteTeamMemberRequest(BaseModel):
+    email: EmailStr
+    role: str = Field(..., pattern="^(owner|admin|member)$")
+    
+class InviteResponse(BaseModel):
+    message: str
+    invite_id: UUID
+    email: str
+    
+class CreateWorkspaceResponse(BaseModel):
+    message: str
+    workspace: WorkspaceResponse
+    current_plan: str
+    workspace_count: int
+    workspace_limit: int

@@ -62,3 +62,79 @@ class EmailService:
         except Exception as e:
             print(f"Error sending email: {e}")
             return False
+    
+    @staticmethod
+    def send_invitation_email(
+        to_email: str, 
+        workspace_name: str, 
+        inviter_name: str,
+        invite_link: str,
+        role: str
+    ):
+        """Send workspace invitation email"""
+        subject = f"Invitation to join {workspace_name} on Zuno"
+        
+        # HTML template for invitation email
+        html_template = """
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #333;">Workspace Invitation</h2>
+                <p>Hello,</p>
+                <p><strong>{{ inviter_name }}</strong> has invited you to join the workspace 
+                   <strong>{{ workspace_name }}</strong> on Zuno Task Management.</p>
+                
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                    <p><strong>Workspace:</strong> {{ workspace_name }}</p>
+                    <p><strong>Role:</strong> {{ role }}</p>
+                    <p><strong>Invited by:</strong> {{ inviter_name }}</p>
+                </div>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{{ invite_link }}" style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                        Accept Invitation
+                    </a>
+                </div>
+                
+                <p>Or copy and paste this link in your browser:</p>
+                <p style="word-break: break-all; color: #666;">{{ invite_link }}</p>
+                
+                <p>This invitation will expire in 7 days.</p>
+                <p>If you don't have a Zuno account, you'll be prompted to create one.</p>
+                
+                <br>
+                <p>Best regards,<br>The Zuno Team</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Render template
+        template = Template(html_template)
+        html_content = template.render(
+            workspace_name=workspace_name,
+            inviter_name=inviter_name,
+            invite_link=invite_link,
+            role=role.capitalize()
+        )
+        
+        # Create message
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = settings.FROM_EMAIL
+        msg['To'] = to_email
+        
+        # Attach HTML
+        msg.attach(MIMEText(html_content, 'html'))
+        
+        # Send email
+        try:
+            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+                server.starttls()
+                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                server.send_message(msg)
+            return True
+        except Exception as e:
+            print(f"Error sending invitation email: {e}")
+            return False
