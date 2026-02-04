@@ -3,7 +3,6 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
-from app.schemas.subscription import SubscriptionResponse
 
 class WorkspaceBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
@@ -18,7 +17,6 @@ class WorkspaceResponse(WorkspaceBase):
     owner_id: UUID
     is_active: bool
     created_at: datetime
-    subscription: SubscriptionResponse | None
     
     class Config:
         from_attributes = True

@@ -52,17 +52,6 @@ class WorkspaceService:
             )
             
             db.add(workspace_member)
-            
-            # Create subscription entry for free tier
-            subscription = Subscription(
-                workspace_id=workspace.id,
-                plan="free",
-                seats=2,
-                status="active"
-                # current_period_end can be set to None for free tier or set to far future
-            )
-            
-            db.add(subscription)
             db.commit()
             
             return workspace

@@ -15,19 +15,20 @@ async def get_default_workspace(
     db: Session = Depends(get_db)
 ):
     """
-    Get user's default workspace (first workspace they own)
+    Get user's default (first created) workspace
     """
-    try:
-        workspace = db.query(Workspace).filter(
-            Workspace.owner_id == current_user.id
-        ).first()
-    except Exception as e:
-        print("Exception in fetching workspace", e)
-        
+
+    workspace = (
+        db.query(Workspace)
+        .filter(Workspace.owner_id == current_user.id)
+        .order_by(Workspace.created_at.asc())
+        .first()
+    )
+
     if not workspace:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No workspace found for user"
         )
-    
+
     return workspace

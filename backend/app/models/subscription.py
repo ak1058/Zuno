@@ -1,3 +1,4 @@
+# app/models/subscription.py
 import uuid
 from sqlalchemy import Column, String, Integer, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
@@ -11,10 +12,14 @@ class Subscription(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
-    workspace_id = Column(UUID(as_uuid=True), ForeignKey("workspaces.id"), unique=True)
+    owner_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        unique=True,
+        nullable=False
+    )
 
     plan = Column(String(50), default="free")
-    seats = Column(Integer, default=5)
 
     status = Column(String(20), default="active")  # active/paused/cancelled
 
@@ -22,4 +27,4 @@ class Subscription(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    workspace = relationship("Workspace", back_populates="subscription")
+    owner = relationship("User")

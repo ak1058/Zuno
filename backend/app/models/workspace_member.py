@@ -1,3 +1,4 @@
+# app/models/workspace_member.py
 import uuid
 from sqlalchemy import Column, String, DateTime, Boolean, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID

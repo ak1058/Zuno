@@ -1,3 +1,4 @@
+# app/models/invite.py
 import uuid
 from sqlalchemy import Column, String, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID

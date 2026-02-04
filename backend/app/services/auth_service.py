@@ -14,6 +14,8 @@ from app.utils.security import (
 from app.services.email_service import EmailService
 from app.services.workspace_service import WorkspaceService
 from app.config import settings
+from app.models.subscription import Subscription
+
 
 class AuthService:
     # -----------------------------
@@ -75,13 +77,24 @@ class AuthService:
         db.commit()
         db.refresh(user)
         
-        # Create default workspace for the user
+        # Create Free subscription and default workspace for the user
         try:
+            # 1️⃣ Create FREE subscription for owner
+            subscription = Subscription(
+                owner_id=user.id,
+                plan="free",
+                status="active"
+            )
+            db.add(subscription)
+            db.commit()
+
+            # 2️⃣ Create default workspace
             WorkspaceService.create_default_workspace_for_user(
                 db=db,
                 user_id=user.id,
                 user_full_name=user.full_name
             )
+
         except Exception as e:
             # Even if workspace creation fails, user should still be verified
             # We can  log this error for debugging
