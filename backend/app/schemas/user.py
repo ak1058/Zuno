@@ -27,12 +27,17 @@ class UserInDB(UserBase):
     class Config:
         from_attributes = True
 
-# UPDATED: Removed refresh_token
+
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    expires_in: int  # Token expiry in seconds (optional but useful for frontend)
+    expires_in: int 
 
 class TokenData(BaseModel):
     email: Optional[str] = None
     user_id: Optional[int] = None
+
+class UserVerifyResponse(BaseModel):
+    message: str
+    user_id: UUID
+    workspace_created: bool = True

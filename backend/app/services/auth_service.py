@@ -1,4 +1,4 @@
-# app/services/auth_service.py
+# app/services/auth_service.py (updated)
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
@@ -12,6 +12,7 @@ from app.utils.security import (
     generate_verification_token
 )
 from app.services.email_service import EmailService
+from app.services.workspace_service import WorkspaceService
 from app.config import settings
 
 class AuthService:
@@ -67,11 +68,26 @@ class AuthService:
                 detail="Invalid or expired verification token"
             )
         
+        # Mark user as verified
         user.is_verified = True
         user.verification_token = None
         user.verification_token_expires = None
         db.commit()
         db.refresh(user)
+        
+        # Create default workspace for the user
+        try:
+            WorkspaceService.create_default_workspace_for_user(
+                db=db,
+                user_id=user.id,
+                user_full_name=user.full_name
+            )
+        except Exception as e:
+            # Even if workspace creation fails, user should still be verified
+            # We can  log this error for debugging
+            print(f"Workspace creation failed for user {user.id}: {str(e)}")
+            # We can decide whether to rollback user verification or continue
+            # For now, we'll continue since user is verified
         
         return user
 

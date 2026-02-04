@@ -4,6 +4,7 @@ from sqlalchemy.sql import func
 from app.database import Base
 import uuid
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 
 class User(Base):
     __tablename__ = "users"
@@ -18,9 +19,13 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    # Add these for future use (optional)
+    # Add these for future use 
     is_active = Column(Boolean, default=True)
     profile_picture = Column(Text, nullable=True)
+    
+    # Relationships
+    owned_workspaces = relationship("Workspace", back_populates="owner")
+    workspace_memberships = relationship("WorkspaceMember", back_populates="user")
     
     def __repr__(self):
         return f"<User {self.email}>"

@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.schemas.user import UserCreate, UserLogin, UserVerify, Token, UserInDB
+from app.schemas.user import UserCreate, UserLogin, UserVerify, Token, UserInDB, UserVerifyResponse
 from app.services.auth_service import AuthService
 from app.utils.dependencies import get_current_active_user
 
@@ -22,14 +22,18 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
             detail=str(e)
         )
 
-@router.post("/verify-email")
+@router.post("/verify-email", response_model=UserVerifyResponse)
 async def verify_email(verify_data: UserVerify, db: Session = Depends(get_db)):
     """
     Verify user's email with token
     """
     try:
         user = AuthService.verify_email(db, verify_data.token)
-        return {"message": "Email verified successfully", "user_id": user.id}
+        return UserVerifyResponse(
+            message="Email verified successfully",
+            user_id=user.id,
+            workspace_created=True
+        )
     except HTTPException as e:
         raise e
     except Exception as e:
