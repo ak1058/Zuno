@@ -17,6 +17,8 @@ class WorkspaceResponse(WorkspaceBase):
     owner_id: UUID
     is_active: bool
     created_at: datetime
+    user_role: str  
+    is_owner: bool  
     
     class Config:
         from_attributes = True

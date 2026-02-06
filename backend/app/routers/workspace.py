@@ -92,21 +92,17 @@ async def invite_team_member(
         email=result["email"]
     )
 
+from app.services.workspace_service import WorkspaceService
+
 @router.get("/my-workspaces", response_model=list[WorkspaceResponse])
 async def get_my_workspaces(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """
-    Get all workspaces owned by the current user
+    Get all workspaces where the current user is a member (any role)
     """
-    workspaces = (
-        db.query(Workspace)
-        .filter(Workspace.owner_id == current_user.id)
-        .order_by(Workspace.created_at.desc())
-        .all()
-    )
-    
+    workspaces = WorkspaceService.get_user_workspaces(db, current_user.id)
     return workspaces
 
 @router.get("/{workspace_id}/members", response_model=list)

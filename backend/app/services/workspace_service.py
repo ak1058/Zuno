@@ -376,3 +376,66 @@ class WorkspaceService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to send invitation: {str(e)}"
             )
+        
+    @staticmethod
+    def get_user_workspaces(db: Session, user_id: uuid.UUID):
+        """
+        Get all workspaces where user is a member (any role: owner, admin, member)
+        """
+        try:
+            # Get all workspace IDs where user is an active member
+            workspace_ids = (
+                db.query(WorkspaceMember.workspace_id)
+                .filter(
+                    WorkspaceMember.user_id == user_id,
+                    WorkspaceMember.is_active == True
+                )
+                .all()
+            )
+            
+            # Extract IDs from tuples
+            workspace_id_list = [w[0] for w in workspace_ids]
+            
+            if not workspace_id_list:
+                return []
+            
+            # Fetch all workspaces with member details
+            workspaces = (
+                db.query(Workspace, WorkspaceMember.role)
+                .join(
+                    WorkspaceMember,
+                    Workspace.id == WorkspaceMember.workspace_id
+                )
+                .filter(
+                    Workspace.id.in_(workspace_id_list),
+                    WorkspaceMember.user_id == user_id,
+                    WorkspaceMember.is_active == True,
+                    Workspace.is_active == True
+                )
+                .order_by(Workspace.created_at.desc())
+                .all()
+            )
+            
+            # Format response with role information
+            result = []
+            for workspace, role in workspaces:
+                workspace_dict = {
+                    "id": workspace.id,
+                    "name": workspace.name,
+                    "slug": workspace.slug,
+                    "description": workspace.description,
+                    "owner_id": workspace.owner_id,
+                    "is_active": workspace.is_active,
+                    "created_at": workspace.created_at,
+                    "user_role": role,  
+                    "is_owner": workspace.owner_id == user_id
+                }
+                result.append(workspace_dict)
+            
+            return result
+            
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to fetch workspaces: {str(e)}"
+            )
