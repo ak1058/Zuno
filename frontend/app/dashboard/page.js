@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ThemeToggle } from "../components/theme-toggle";
+import Link from "next/link";
 
 export default function Dashboard() {
     const router = useRouter();
@@ -179,25 +181,25 @@ export default function Dashboard() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-black text-white flex items-center justify-center">
+            <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
                 <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-zinc-400">Loading your dashboard...</p>
+                    <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Loading your dashboard...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-black text-white">
+        <div className="min-h-screen bg-background text-foreground">
             {/* Background Effects */}
             <div className="fixed inset-0 z-0">
-                <div className="absolute top-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-purple-900/30 blur-[120px]" />
-                <div className="absolute bottom-[-10%] right-[-10%] h-[500px] w-[500px] rounded-full bg-indigo-900/30 blur-[120px]" />
+                <div className="absolute top-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-primary/10 blur-[120px]" />
+                <div className="absolute bottom-[-10%] right-[-10%] h-[500px] w-[500px] rounded-full bg-primary/20 blur-[120px]" />
             </div>
 
             {/* Navigation */}
-            <nav className="relative z-20 border-b border-white/10 bg-black/50 backdrop-blur-xl">
+            <nav className="relative z-20 border-b border-border bg-background/50 backdrop-blur-xl">
                 <div className="mx-auto max-w-7xl px-6 py-4">
                     <div className="flex items-center justify-between">
                         <div className="text-2xl font-bold">Zuno</div>
@@ -206,13 +208,13 @@ export default function Dashboard() {
                             {/* Workspace Selector */}
                             {workspaces.length > 0 && (
                                 <div className="relative group">
-                                    <button className="flex items-center gap-3 px-4 py-2 rounded-lg border border-white/10 hover:bg-white/5 transition-colors">
-                                        <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center font-semibold">
+                                    <button className="flex items-center gap-3 px-4 py-2 rounded-lg border border-border hover:bg-accent transition-colors">
+                                        <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center font-semibold text-primary-foreground">
                                             {currentWorkspace?.name.charAt(0) || "W"}
                                         </div>
                                         <div className="text-left">
                                             <p className="text-sm font-medium">{currentWorkspace?.name || "Select Workspace"}</p>
-                                            <p className="text-xs text-zinc-400">
+                                            <p className="text-xs text-muted-foreground">
                                                 {workspaces.length} workspace{workspaces.length !== 1 ? 's' : ''}
                                             </p>
                                         </div>
@@ -221,37 +223,37 @@ export default function Dashboard() {
                                         </svg>
                                     </button>
                                     
-                                    <div className="absolute right-0 mt-2 w-64 bg-black/90 border border-white/10 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 backdrop-blur-xl z-50">
+                                    <div className="absolute right-0 mt-2 w-64 bg-background/90 border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 backdrop-blur-xl z-50">
                                         <div className="py-2">
                                             {workspaces.map((workspace) => (
                                                 <button
                                                     key={workspace.id}
                                                     onClick={() => handleWorkspaceChange(workspace)}
-                                                    className={`w-full text-left px-4 py-3 hover:bg-white/5 transition-colors ${currentWorkspace?.id === workspace.id ? 'bg-indigo-500/20' : ''}`}
+                                                    className={`w-full text-left px-4 py-3 hover:bg-accent transition-colors ${currentWorkspace?.id === workspace.id ? 'bg-primary/20' : ''}`}
                                                 >
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-6 h-6 bg-indigo-500/30 rounded-full flex items-center justify-center text-xs">
+                                                        <div className="w-6 h-6 bg-primary/30 rounded-full flex items-center justify-center text-xs text-primary-foreground">
                                                             {workspace.name.charAt(0)}
                                                         </div>
                                                         <div>
                                                             <p className="text-sm font-medium">{workspace.name}</p>
-                                                            <p className="text-xs text-zinc-400 truncate">{workspace.slug}</p>
+                                                            <p className="text-xs text-muted-foreground truncate">{workspace.slug}</p>
                                                         </div>
                                                     </div>
                                                 </button>
                                             ))}
-                                            <div className="border-t border-white/10 mt-2 pt-2">
+                                            <div className="border-t border-border mt-2 pt-2">
                                                 <button
                                                     onClick={() => setShowNewWorkspaceModal(true)}
-                                                    className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors text-indigo-400"
+                                                    className="w-full text-left px-4 py-3 hover:bg-accent transition-colors text-primary"
                                                 >
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-6 h-6 border border-dashed border-indigo-400 rounded-full flex items-center justify-center text-xs">
+                                                        <div className="w-6 h-6 border border-dashed border-primary rounded-full flex items-center justify-center text-xs">
                                                             +
                                                         </div>
                                                         <div>
                                                             <p className="text-sm font-medium">Create New Workspace</p>
-                                                            <p className="text-xs text-zinc-400">Add another workspace</p>
+                                                            <p className="text-xs text-muted-foreground">Add another workspace</p>
                                                         </div>
                                                     </div>
                                                 </button>
@@ -265,16 +267,18 @@ export default function Dashboard() {
                                 <div className="hidden md:block">
                                     <div className="flex items-center gap-2">
                                         <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                                        <span className="text-sm text-zinc-300 capitalize">
+                                        <span className="text-sm text-muted-foreground capitalize">
                                             {subscription.plan} Plan
                                         </span>
                                     </div>
                                 </div>
                             )}
                             
+                            <ThemeToggle />
+                            
                             <button
                                 onClick={handleLogout}
-                                className="px-4 py-2 text-sm font-medium rounded-lg border border-white/10 hover:bg-white/5 transition-colors"
+                                className="px-4 py-2 text-sm font-medium rounded-lg border border-border hover:bg-accent transition-colors"
                             >
                                 Logout
                             </button>
@@ -287,10 +291,10 @@ export default function Dashboard() {
             <main className="relative z-10 px-6 py-12">
                 <div className="mx-auto max-w-7xl space-y-8">
                     {/* Welcome Banner */}
-                    <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-purple-900/20 to-indigo-900/20 p-8 backdrop-blur-xl">
+                    <div className="rounded-2xl border border-border bg-gradient-to-r from-primary/10 to-primary/20 p-8 backdrop-blur-xl">
                         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                             <div className="flex-1">
-                                <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-indigo-300 mb-4">
+                                <div className="inline-flex items-center rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-primary mb-4 backdrop-blur-xl">
                                     <span>🚀 Welcome to Zuno</span>
                                 </div>
                                 
@@ -298,14 +302,14 @@ export default function Dashboard() {
                                     {currentWorkspace ? `${currentWorkspace.name} Dashboard` : "Your Workspace Dashboard"}
                                 </h1>
                                 
-                                <p className="text-zinc-400 max-w-2xl">
+                                <p className="text-muted-foreground max-w-2xl">
                                     {currentWorkspace?.description || "Manage your tasks and team members efficiently. Create workspaces, invite members, and collaborate seamlessly."}
                                 </p>
                             </div>
                             
                             <div className="flex flex-col gap-4">
                                 {subscription && (
-                                    <div className="inline-flex items-center gap-2 rounded-full bg-green-900/30 border border-green-800/50 px-4 py-2">
+                                    <div className="inline-flex items-center gap-2 rounded-full bg-green-500/10 border border-green-500/50 px-4 py-2">
                                         <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                                         <span className="text-sm font-medium text-green-400 capitalize">
                                             {subscription.plan} • {subscription.status}
@@ -316,14 +320,14 @@ export default function Dashboard() {
                                 <div className="flex gap-3">
                                     <button
                                         onClick={() => setShowNewWorkspaceModal(true)}
-                                        className="px-4 py-2 text-sm font-medium rounded-lg border border-indigo-500 bg-indigo-500/20 hover:bg-indigo-500/30 transition-colors"
+                                        className="px-4 py-2 text-sm font-medium rounded-lg border border-primary bg-primary/20 hover:bg-primary/30 transition-colors"
                                     >
                                         + New Workspace
                                     </button>
                                     {currentWorkspace && (
                                         <button
                                             onClick={() => setShowInviteModal(true)}
-                                            className="px-4 py-2 text-sm font-medium rounded-lg border border-white/10 hover:bg-white/5 transition-colors"
+                                            className="px-4 py-2 text-sm font-medium rounded-lg border border-border hover:bg-accent transition-colors"
                                         >
                                             Invite Member
                                         </button>
@@ -336,20 +340,20 @@ export default function Dashboard() {
                     {/* Stats Grid */}
                     <div className="grid md:grid-cols-3 gap-6">
                         {/* Workspace Stats */}
-                        <div className="border border-white/10 bg-white/5 rounded-2xl p-6 backdrop-blur-xl">
+                        <div className="border border-border bg-card rounded-2xl p-6 backdrop-blur-xl">
                             <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
                                 <span className="text-2xl">🏢</span>
                                 Workspace Stats
                             </h3>
                             <div className="space-y-4">
                                 <div>
-                                    <p className="text-sm text-zinc-400">Total Workspaces</p>
-                                    <p className="text-2xl font-bold text-white">{workspaces.length}</p>
+                                    <p className="text-sm text-muted-foreground">Total Workspaces</p>
+                                    <p className="text-2xl font-bold text-foreground">{workspaces.length}</p>
                                 </div>
                                 {subscription && (
                                     <div>
-                                        <p className="text-sm text-zinc-400">Plan Limit</p>
-                                        <p className="text-lg font-semibold text-zinc-300">
+                                        <p className="text-sm text-muted-foreground">Plan Limit</p>
+                                        <p className="text-lg font-semibold text-muted-foreground">
                                             {subscription.plan === 'free' ? '1 workspace' : 'Unlimited'}
                                         </p>
                                     </div>
@@ -358,7 +362,7 @@ export default function Dashboard() {
                         </div>
 
                         {/* Subscription Details */}
-                        <div className="border border-white/10 bg-white/5 rounded-2xl p-6 backdrop-blur-xl">
+                        <div className="border border-border bg-card rounded-2xl p-6 backdrop-blur-xl">
                             <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
                                 <span className="text-2xl">📋</span>
                                 Subscription
@@ -367,47 +371,47 @@ export default function Dashboard() {
                                 {subscription ? (
                                     <>
                                         <div>
-                                            <p className="text-sm text-zinc-400">Current Plan</p>
-                                            <p className="text-2xl font-bold text-indigo-400 capitalize">{subscription.plan}</p>
+                                            <p className="text-sm text-muted-foreground">Current Plan</p>
+                                            <p className="text-2xl font-bold text-primary capitalize">{subscription.plan}</p>
                                         </div>
                                         <div>
-                                            <p className="text-sm text-zinc-400">Status</p>
+                                            <p className="text-sm text-muted-foreground">Status</p>
                                             <p className="text-lg font-semibold text-green-400 capitalize">{subscription.status}</p>
                                         </div>
                                         {subscription.current_period_end && (
                                             <div>
-                                                <p className="text-sm text-zinc-400">Renews</p>
-                                                <p className="text-sm text-zinc-300">
+                                                <p className="text-sm text-muted-foreground">Renews</p>
+                                                <p className="text-sm text-muted-foreground">
                                                     {new Date(subscription.current_period_end).toLocaleDateString()}
                                                 </p>
                                             </div>
                                         )}
                                     </>
                                 ) : (
-                                    <p className="text-zinc-400">No subscription data</p>
+                                    <p className="text-muted-foreground">No subscription data</p>
                                 )}
                             </div>
                         </div>
 
                         {/* Current Workspace */}
                         {currentWorkspace && (
-                            <div className="border border-white/10 bg-white/5 rounded-2xl p-6 backdrop-blur-xl">
+                            <div className="border border-border bg-card rounded-2xl p-6 backdrop-blur-xl">
                                 <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
                                     <span className="text-2xl">⚡</span>
                                     Current Workspace
                                 </h3>
                                 <div className="space-y-4">
                                     <div>
-                                        <p className="text-sm text-zinc-400">Workspace Name</p>
-                                        <p className="text-lg font-semibold text-white truncate">{currentWorkspace.name}</p>
+                                        <p className="text-sm text-muted-foreground">Workspace Name</p>
+                                        <p className="text-lg font-semibold text-foreground truncate">{currentWorkspace.name}</p>
                                     </div>
                                     <div>
-                                        <p className="text-sm text-zinc-400">Slug</p>
-                                        <p className="text-sm text-zinc-300 font-mono">{currentWorkspace.slug}</p>
+                                        <p className="text-sm text-muted-foreground">Slug</p>
+                                        <p className="text-sm text-muted-foreground font-mono">{currentWorkspace.slug}</p>
                                     </div>
                                     <div>
-                                        <p className="text-sm text-zinc-400">Created</p>
-                                        <p className="text-sm text-zinc-300">
+                                        <p className="text-sm text-muted-foreground">Created</p>
+                                        <p className="text-sm text-muted-foreground">
                                             {new Date(currentWorkspace.created_at).toLocaleDateString()}
                                         </p>
                                     </div>
@@ -418,7 +422,7 @@ export default function Dashboard() {
 
                     {/* Team Members Section */}
                     {currentWorkspace && workspaceMembers.length > 0 && (
-                        <div className="border border-white/10 bg-white/5 rounded-2xl p-6 backdrop-blur-xl">
+                        <div className="border border-border bg-card rounded-2xl p-6 backdrop-blur-xl">
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="text-lg font-semibold flex items-center gap-2">
                                     <span className="text-2xl">👥</span>
@@ -426,7 +430,7 @@ export default function Dashboard() {
                                 </h3>
                                 <button
                                     onClick={() => setShowInviteModal(true)}
-                                    className="px-4 py-2 text-sm font-medium rounded-lg border border-white/10 hover:bg-white/5 transition-colors"
+                                    className="px-4 py-2 text-sm font-medium rounded-lg border border-border hover:bg-accent transition-colors"
                                 >
                                     + Invite Member
                                 </button>
@@ -436,22 +440,22 @@ export default function Dashboard() {
                                 {workspaceMembers.map((member) => (
                                     <div 
                                         key={member.id} 
-                                        className="border border-white/10 rounded-xl p-4 hover:border-white/20 transition-colors"
+                                        className="border border-border rounded-xl p-4 hover:border-primary/50 transition-colors"
                                     >
                                         <div className="flex items-center gap-3 mb-3">
-                                            <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center font-semibold">
+                                            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center font-semibold text-primary-foreground">
                                                 {member.user.full_name?.charAt(0) || "U"}
                                             </div>
                                             <div>
                                                 <p className="font-medium">{member.user.full_name}</p>
-                                                <p className="text-sm text-zinc-400 truncate">{member.user.email}</p>
+                                                <p className="text-sm text-muted-foreground truncate">{member.user.email}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <span className={`px-2 py-1 text-xs rounded-full capitalize ${
                                                 member.role === 'owner' 
-                                                    ? 'bg-purple-900/30 text-purple-400 border border-purple-800/50'
-                                                    : 'bg-zinc-800/50 text-zinc-300 border border-zinc-700/50'
+                                                    ? 'bg-purple-500/10 text-purple-400 border border-purple-500/50'
+                                                    : 'bg-muted text-muted-foreground border border-border'
                                             }`}>
                                                 {member.role}
                                             </span>
@@ -468,13 +472,13 @@ export default function Dashboard() {
                     )}
 
                     {pendingInvites.length > 0 && (
-                        <div className="border border-yellow-500/20 bg-yellow-900/10 rounded-2xl p-6 backdrop-blur-xl">
+                        <div className="border border-yellow-500/20 bg-yellow-500/10 rounded-2xl p-6 backdrop-blur-xl">
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="text-lg font-semibold flex items-center gap-2">
                                     <span className="text-2xl">📨</span>
                                     Pending Invitations ({pendingInvites.length})
                                 </h3>
-                                <span className="px-3 py-1 text-xs rounded-full bg-yellow-900/30 text-yellow-400 border border-yellow-800/50">
+                                <span className="px-3 py-1 text-xs rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/50">
                                     Action Required
                                 </span>
                             </div>
@@ -483,7 +487,7 @@ export default function Dashboard() {
                                 {pendingInvites.map((invite) => (
                                     <div 
                                         key={invite.id} 
-                                        className="border border-yellow-500/20 rounded-xl p-4 bg-yellow-900/5"
+                                        className="border border-yellow-500/20 rounded-xl p-4 bg-yellow-500/5"
                                     >
                                         <div className="flex items-start justify-between mb-3">
                                             <div>
@@ -492,8 +496,8 @@ export default function Dashboard() {
                                             </div>
                                             <span className={`px-2 py-1 text-xs rounded-full capitalize ${
                                                 invite.role === 'admin' 
-                                                    ? 'bg-purple-900/30 text-purple-400 border border-purple-800/50'
-                                                    : 'bg-zinc-800/50 text-zinc-300 border border-zinc-700/50'
+                                                    ? 'bg-purple-500/10 text-purple-400 border border-purple-500/50'
+                                                    : 'bg-muted text-muted-foreground border border-border'
                                             }`}>
                                                 {invite.role}
                                             </span>
@@ -501,11 +505,11 @@ export default function Dashboard() {
                                         
                                         <div className="flex items-center justify-between text-sm">
                                             <div>
-                                                <p className="text-zinc-400">Expires: {new Date(invite.expires_at).toLocaleDateString()}</p>
+                                                <p className="text-muted-foreground">Expires: {new Date(invite.expires_at).toLocaleDateString()}</p>
                                             </div>
                                             <Link 
-                                                href={`/accept-invite?token=${token}`}
-                                                className="px-4 py-2 text-sm font-medium rounded-lg bg-yellow-600 hover:bg-yellow-700 transition-colors"
+                                                href={`/accept-invite?token=${invite.token}`}
+                                                className="px-4 py-2 text-sm font-medium rounded-lg bg-yellow-600 hover:bg-yellow-700 transition-colors text-white"
                                             >
                                                 Accept Invitation
                                             </Link>
@@ -520,33 +524,33 @@ export default function Dashboard() {
                     <div className="grid md:grid-cols-3 gap-6">
                         <button 
                             onClick={() => setShowNewWorkspaceModal(true)}
-                            className="border border-white/10 bg-white/5 rounded-2xl p-6 backdrop-blur-xl hover:border-indigo-500/50 transition-colors text-left group"
+                            className="border border-border bg-card rounded-2xl p-6 backdrop-blur-xl hover:border-primary/50 transition-colors text-left group"
                         >
                             <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">🏗️</div>
                             <h3 className="text-lg font-semibold mb-2">Create Workspace</h3>
-                            <p className="text-sm text-zinc-400">Start a new workspace for your team</p>
+                            <p className="text-sm text-muted-foreground">Start a new workspace for your team</p>
                         </button>
 
                         <button 
                             onClick={() => currentWorkspace && setShowInviteModal(true)}
-                            className="border border-white/10 bg-white/5 rounded-2xl p-6 backdrop-blur-xl hover:border-indigo-500/50 transition-colors text-left group"
+                            className="border border-border bg-card rounded-2xl p-6 backdrop-blur-xl hover:border-primary/50 transition-colors text-left group"
                             disabled={!currentWorkspace}
                         >
                             <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">👥</div>
                             <h3 className="text-lg font-semibold mb-2">Invite Team</h3>
-                            <p className="text-sm text-zinc-400">Add members to your workspace</p>
+                            <p className="text-sm text-muted-foreground">Add members to your workspace</p>
                         </button>
 
-                        <button className="border border-white/10 bg-white/5 rounded-2xl p-6 backdrop-blur-xl hover:border-indigo-500/50 transition-colors text-left group">
+                        <button className="border border-border bg-card rounded-2xl p-6 backdrop-blur-xl hover:border-primary/50 transition-colors text-left group">
                             <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">⚙️</div>
                             <h3 className="text-lg font-semibold mb-2">Settings</h3>
-                            <p className="text-sm text-zinc-400">Configure workspace preferences</p>
+                            <p className="text-sm text-muted-foreground">Configure workspace preferences</p>
                         </button>
                     </div>
 
                     {/* Error State */}
                     {error && (
-                        <div className="border border-red-500/20 bg-red-900/10 rounded-2xl p-6 backdrop-blur-xl">
+                        <div className="border border-red-500/20 bg-red-500/10 rounded-2xl p-6 backdrop-blur-xl">
                             <div className="flex items-center gap-3 text-red-400 mb-2">
                                 <span className="text-xl">⚠️</span>
                                 <h3 className="font-semibold">Error Loading Dashboard</h3>
@@ -566,12 +570,12 @@ export default function Dashboard() {
             {/* New Workspace Modal */}
             {showNewWorkspaceModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-                    <div className="bg-black/90 border border-white/10 rounded-2xl p-6 w-full max-w-md">
+                    <div className="bg-background/90 border border-border rounded-2xl p-6 w-full max-w-md">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-xl font-semibold">Create New Workspace</h3>
                             <button 
                                 onClick={() => setShowNewWorkspaceModal(false)}
-                                className="p-2 hover:bg-white/5 rounded-lg transition-colors"
+                                className="p-2 hover:bg-accent rounded-lg transition-colors"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -581,26 +585,26 @@ export default function Dashboard() {
                         
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                                <label className="block text-sm font-medium text-foreground mb-2">
                                     Workspace Name *
                                 </label>
                                 <input
                                     type="text"
                                     value={newWorkspaceData.name}
                                     onChange={(e) => setNewWorkspaceData({...newWorkspaceData, name: e.target.value})}
-                                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-indigo-500"
+                                    className="w-full px-4 py-2 bg-background border border-input rounded-lg focus:outline-none focus:border-ring text-foreground"
                                     placeholder="Enter workspace name"
                                 />
                             </div>
                             
                             <div>
-                                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                                <label className="block text-sm font-medium text-foreground mb-2">
                                     Description (Optional)
                                 </label>
                                 <textarea
                                     value={newWorkspaceData.description}
                                     onChange={(e) => setNewWorkspaceData({...newWorkspaceData, description: e.target.value})}
-                                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-indigo-500 min-h-[100px]"
+                                    className="w-full px-4 py-2 bg-background border border-input rounded-lg focus:outline-none focus:border-ring text-foreground min-h-[100px]"
                                     placeholder="Describe your workspace"
                                 />
                             </div>
@@ -609,13 +613,13 @@ export default function Dashboard() {
                                 <button
                                     onClick={handleCreateWorkspace}
                                     disabled={isCreating}
-                                    className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition-colors disabled:opacity-50"
+                                    className="flex-1 px-4 py-3 bg-primary hover:bg-primary/90 rounded-lg font-medium text-primary-foreground transition-colors disabled:opacity-50"
                                 >
                                     {isCreating ? 'Creating...' : 'Create Workspace'}
                                 </button>
                                 <button
                                     onClick={() => setShowNewWorkspaceModal(false)}
-                                    className="px-4 py-3 border border-white/10 hover:bg-white/5 rounded-lg font-medium transition-colors"
+                                    className="px-4 py-3 border border-border hover:bg-accent rounded-lg font-medium transition-colors"
                                 >
                                     Cancel
                                 </button>
@@ -628,12 +632,12 @@ export default function Dashboard() {
             {/* Invite Member Modal */}
             {showInviteModal && currentWorkspace && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-                    <div className="bg-black/90 border border-white/10 rounded-2xl p-6 w-full max-w-md">
+                    <div className="bg-background/90 border border-border rounded-2xl p-6 w-full max-w-md">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-xl font-semibold">Invite to {currentWorkspace.name}</h3>
                             <button 
                                 onClick={() => setShowInviteModal(false)}
-                                className="p-2 hover:bg-white/5 rounded-lg transition-colors"
+                                className="p-2 hover:bg-accent rounded-lg transition-colors"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -643,31 +647,31 @@ export default function Dashboard() {
                         
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                                <label className="block text-sm font-medium text-foreground mb-2">
                                     Email Address *
                                 </label>
                                 <input
                                     type="email"
                                     value={inviteData.email}
                                     onChange={(e) => setInviteData({...inviteData, email: e.target.value})}
-                                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-indigo-500"
+                                    className="w-full px-4 py-2 bg-background border border-input rounded-lg focus:outline-none focus:border-ring text-foreground"
                                     placeholder="Enter email address"
                                 />
                             </div>
                             
                             <div>
-                                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                                <label className="block text-sm font-medium text-foreground mb-2">
                                     Role *
                                 </label>
                                 <select
                                     value={inviteData.role}
                                     onChange={(e) => setInviteData({...inviteData, role: e.target.value})}
-                                    className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-indigo-500"
+                                    className="w-full px-4 py-2 bg-background border border-input rounded-lg focus:outline-none focus:border-ring text-foreground"
                                 >
                                     <option value="member">Member</option>
                                     <option value="admin">Admin</option>
                                 </select>
-                                <p className="text-xs text-zinc-500 mt-2">
+                                <p className="text-xs text-muted-foreground mt-2">
                                     Admin: Can manage workspace settings and members
                                 </p>
                             </div>
@@ -676,13 +680,13 @@ export default function Dashboard() {
                                 <button
                                     onClick={handleInviteMember}
                                     disabled={isInviting}
-                                    className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition-colors disabled:opacity-50"
+                                    className="flex-1 px-4 py-3 bg-primary hover:bg-primary/90 rounded-lg font-medium text-primary-foreground transition-colors disabled:opacity-50"
                                 >
                                     {isInviting ? 'Sending...' : 'Send Invitation'}
                                 </button>
                                 <button
                                     onClick={() => setShowInviteModal(false)}
-                                    className="px-4 py-3 border border-white/10 hover:bg-white/5 rounded-lg font-medium transition-colors"
+                                    className="px-4 py-3 border border-border hover:bg-accent rounded-lg font-medium transition-colors"
                                 >
                                     Cancel
                                 </button>

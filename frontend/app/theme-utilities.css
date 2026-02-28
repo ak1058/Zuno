@@ -1,0 +1,42 @@
+/* Add this to your globals.css or a separate file */
+
+/* Theme-aware utility classes */
+.theme-card {
+  @apply border border-border bg-card backdrop-blur-xl;
+}
+
+.theme-button-primary {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90;
+}
+
+.theme-button-secondary {
+  @apply border border-border bg-secondary text-secondary-foreground hover:bg-secondary/80;
+}
+
+.theme-input {
+  @apply border border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring;
+}
+
+.theme-badge {
+  @apply border border-border bg-muted text-muted-foreground;
+}
+
+.theme-alert {
+  @apply border border-border bg-card text-foreground;
+}
+
+.theme-alert-success {
+  @apply border-green-500/20 bg-green-500/10 text-green-600 dark:text-green-400;
+}
+
+.theme-alert-error {
+  @apply border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400;
+}
+
+.theme-alert-warning {
+  @apply border-yellow-500/20 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400;
+}
+
+.theme-alert-info {
+  @apply border-blue-500/20 bg-blue-500/10 text-blue-600 dark:text-blue-400;
+}
